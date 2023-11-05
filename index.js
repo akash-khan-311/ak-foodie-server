@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 require("dotenv").config();
 
@@ -35,8 +35,32 @@ async function run() {
     });
 
     app.get("/api/v1/featuredfoods", async (req, res) => {
-      const cursor = foodsCollection.find({}).limit(6);
+      const cursor = foodsCollection.find({}).sort({ quantity: -1 }).limit(6);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get("/api/v1/food/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodsCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.get("/api/v1/availablefoods", async (req, res) => {
+      const cursor = foodsCollection.find({});
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+
+    app.get("/api/v1/myfood", async (req, res) => {
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+      const result = await foodsCollection.find(query).toArray();
       res.send(result);
     });
 
