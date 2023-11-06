@@ -35,7 +35,7 @@ async function run() {
     });
 
     app.get("/api/v1/featuredfoods", async (req, res) => {
-      const cursor = foodsCollection.find({}).sort({ quantity: -1 }).limit(6);
+      const cursor = foodsCollection.find({}).limit(6);
       const result = await cursor.toArray();
       res.send(result);
     });
