@@ -65,10 +65,9 @@ async function run() {
     app.post("/api/v1/requestfood", async (req, res) => {
       const requestFood = req.body;
       const result = await foodsCollection.insertOne(requestFood);
-      console.log(result);
       res.send(result);
     });
-
+    // Get Requested Food from Database
     app.get("/api/v1/requestfood/:email", async (req, res) => {
       const userEmail = req.params.email;
       const result = await foodsCollection
