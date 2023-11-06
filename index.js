@@ -53,14 +53,19 @@ async function run() {
       res.send(result);
     });
 
-
-
     app.get("/api/v1/myfood", async (req, res) => {
       let query = {};
       if (req.query?.email) {
         query = { email: req.query.email };
       }
       const result = await foodsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/api/v1/requestfood", async (req, res) => {
+      const requestFood = req.body;
+      const result = await foodsCollection.insertOne(requestFood);
+      console.log(result);
       res.send(result);
     });
 
