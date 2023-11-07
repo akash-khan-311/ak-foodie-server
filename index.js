@@ -94,19 +94,46 @@ async function run() {
     });
 
     // Update Manage Signle food - Update Manage Signle
-    app.patch("/api/v1/manage/:id" , async(req,res)=> {
+    app.patch("/api/v1/manage/:id", async (req, res) => {
       const id = req.params.id;
       const updatedStatus = req.body;
-      const filter = {_id: new ObjectId(id)}
+      const filter = { _id: new ObjectId(id) };
       const setUpdatedStatus = {
         $set: {
-          status: updatedStatus.selectedValue
-        }
-      }
-      const result = await foodsCollection.updateOne(filter,setUpdatedStatus)
-      res.send(result)
+          status: updatedStatus.selectedValue,
+        },
+      };
+      const result = await foodsCollection.updateOne(filter, setUpdatedStatus);
+      res.send(result);
       console.log(result);
-    })
+    });
+
+    // Edit Manage Signle food - Update
+
+    app.put("/api/v1/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedFood = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const newFood = {
+        $set: {
+          email: updatedFood.email,
+          foodName: updatedFood.foodName,
+          foodImg: updatedFood.foodImg,
+          expiredDate: updatedFood.expiredDate,
+          status: updatedFood.status,
+          donatorName: updatedFood.donatorName,
+          donatorImg: updatedFood.donatorImg,
+          donationMoney: updatedFood.donationMoney,
+          quantity: updatedFood.quantity,
+          pickupLocation: updatedFood.pickupLocation,
+          aditionalNotes: updatedFood.aditionalNotes,
+        },
+      };
+      const options = { upsert: true };
+      const result = await foodsCollection.updateOne(filter, newFood, options);
+      res.send(result);
+      console.log(result);
+    });
 
     // Send a ping to confirm a successful connection
 
