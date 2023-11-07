@@ -3,10 +3,38 @@ const app = express();
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
-app.use(cors());
+// Middleware
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://ak-foodie-fellowship.netlify.app",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+
+// Verify Token
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized" });
+  }
+  jwt.verify(token, process.env.ACESS_TOKEN_SCRETE, (error, decoded) => {
+    if (error) {
+      return res.status(401).send({ message: "unauthorizedd" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.pnvzqzb.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -27,11 +55,28 @@ async function run() {
     const database = client.db("foodDb");
     const foodsCollection = database.collection("foods");
 
+    // Generate Web Token
+
+    app.post("/api/v1/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACESS_TOKEN_SCRETE, {
+        expiresIn: "10h",
+      });
+
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ message: true });
+    });
+
     app.post("/api/v1/addfood", async (req, res) => {
       const food = req.body;
       const result = await foodsCollection.insertOne(food);
       res.send(result);
-      console.log(result);
+    
     });
 
     app.get("/api/v1/featuredfoods", async (req, res) => {
@@ -53,11 +98,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/api/v1/myfood", async (req, res) => {
+    app.get("/api/v1/myfood", verifyToken, async (req, res) => {
       let query = {};
+      if (req.query.email !== req.user.email) {
+        return res.status(403).send({ message: "Forbidden" });
+      }
       if (req.query?.email) {
         query = { email: req.query.email };
       }
+
       const result = await foodsCollection.find(query).toArray();
       res.send(result);
     });
@@ -68,8 +117,11 @@ async function run() {
       res.send(result);
     });
     // Get Requested Food from Database
-    app.get("/api/v1/requestfood/:email", async (req, res) => {
+    app.get("/api/v1/requestfood/:email", verifyToken, async (req, res) => {
       const userEmail = req.params.email;
+      if (req.params.email !== req.user.email) {
+        return res.status(403).send({ message: "Forbidden" });
+      }
       const result = await foodsCollection
         .find({ requested: true, requesterEmail: userEmail })
         .toArray();
@@ -105,7 +157,6 @@ async function run() {
       };
       const result = await foodsCollection.updateOne(filter, setUpdatedStatus);
       res.send(result);
-      console.log(result);
     });
 
     // Edit Manage Signle food - Update
@@ -132,7 +183,6 @@ async function run() {
       const options = { upsert: true };
       const result = await foodsCollection.updateOne(filter, newFood, options);
       res.send(result);
-      console.log(result);
     });
 
     // Send a ping to confirm a successful connection
