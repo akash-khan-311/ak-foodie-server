@@ -84,7 +84,7 @@ async function run() {
       res.send(result);
     });
 
-    // Manage Signle food - Get Signle Data
+    // Get Data for Manage Signle food - Get Signle Data
 
     app.get("/api/v1/manage/:id", async (req, res) => {
       const id = req.params.id;
@@ -92,6 +92,21 @@ async function run() {
       const result = await foodsCollection.findOne(query);
       res.send(result);
     });
+
+    // Update Manage Signle food - Update Manage Signle
+    app.patch("/api/v1/manage/:id" , async(req,res)=> {
+      const id = req.params.id;
+      const updatedStatus = req.body;
+      const filter = {_id: new ObjectId(id)}
+      const setUpdatedStatus = {
+        $set: {
+          status: updatedStatus.selectedValue
+        }
+      }
+      const result = await foodsCollection.updateOne(filter,setUpdatedStatus)
+      res.send(result)
+      console.log(result);
+    })
 
     // Send a ping to confirm a successful connection
 
