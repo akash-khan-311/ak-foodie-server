@@ -76,7 +76,6 @@ async function run() {
       const food = req.body;
       const result = await foodsCollection.insertOne(food);
       res.send(result);
-    
     });
 
     app.get("/api/v1/featuredfoods", async (req, res) => {
@@ -111,9 +110,24 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/api/v1/requestfood", async (req, res) => {
+    app.patch("/api/v1/requestfood/:id", async (req, res) => {
       const requestFood = req.body;
-      const result = await foodsCollection.insertOne(requestFood);
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const newFood = {
+        $set: {
+          requesterDonate: requestFood.requesterDonate,
+          requesterNotes: requestFood.requesterNotes,
+          requesterName: requestFood.requesterName,
+          requesterImg: requestFood.requesterImg,
+          requesterEmail: requestFood.requesterEmail,
+          requestDate: requestFood.requestDate,
+          requested: requestFood.requested,
+        },
+      };
+
+      const result = await foodsCollection.updateOne(filter, newFood);
       res.send(result);
     });
     // Get Requested Food from Database
@@ -128,11 +142,33 @@ async function run() {
       res.send(result);
     });
 
-    // Cancel food request - Delete
+    // Delete From Database
     app.delete("/api/v1/deleted/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await foodsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Cancel food request - Updated
+    app.patch("/api/v1/updated/:id", async (req, res) => {
+      const id = req.params.id;
+      const food = req.body;
+      const filter = { _id: new ObjectId(id) };
+
+      const newFood = {
+        $set: {
+          requesterDonate: null,
+          requesterNotes: null,
+          requesterName: null,
+          requesterImg: null,
+          requesterEmail: null,
+          requestDate: null,
+          requested: null,
+        },
+      };
+
+      const result = await foodsCollection.updateOne(filter, newFood);
       res.send(result);
     });
 
